@@ -45,29 +45,27 @@ team.split = split(rs.fg,rs.fg$GroupName)
 
 ##get cognitive and social matrices from real data
 ###social 
-
 trans_mats = lapply(team.split,
                     get_trans_mat,
                     speakerCol = "UserName",
                     teamCol = "GroupName")
 
-
-
 ###cognitive
 co_mats_team = co_mats_team[sort(names(co_mats_team))]
 
 #run simulation using these matrices
-set.seed(2)
+set.seed(1234)
 
-mod.results = replicate(n = 1, expr = sim_boot.3.0(
+mod.results = replicate(n = 5, expr = sim_boot.3.0(
   codes = 8,
   window = 2,
   t_matrices = trans_mats,
-  adj_mats = co_mats_team,
+  adj_mats = co_mats_team ,
   type = "real", 
   normalize = TRUE,
   steps = null), simplify = FALSE)
 
+print(mod.results)
 
 #extract simulated adjacency vectors
 mod.results = map(mod.results,bind_rows,.id = "id")
@@ -80,8 +78,6 @@ add_rnames = function(x){
 }
 
 mod.results = map(mod.results,add_rnames)
-
-
 
 #get real model
 ##get metadata
@@ -140,26 +136,13 @@ if(all(unlist(unit.counts)==real.count)){
 ##The expected value test: A new statistical warrant for theoretical saturation. 
 ##Paper submitted to the Third International Conference on Quantitative Ethnography.
 
-write.csv(real_mod, "C:/Users/granc/Documents/RProjects/simulating-collab-discourse/Real_mod.csv", row.names=FALSE)
-write.csv(mod.results, "C:/Users/granc/Documents/RProjects/simulating-collab-discourse/Sim_mod.csv", row.names=FALSE)
-
-
-mod_a = real_mod %>% select(contains("&"))
-
-mod_b = map(mod.results,select,contains("V"))
-mod_b = map(mod_b,data.frame)
-
-print(mod_a)
-print(mod_b)
-
-write.csv(mod_a, "C:/Users/granc/Documents/RProjects/simulating-collab-discourse/Real_mod_a.csv", row.names=FALSE)
-write.csv(mod_b, "C:/Users/granc/Documents/RProjects/simulating-collab-discourse/Sim_mod_b.csv", row.names=FALSE)
-
-test = ena.compare.models(observedMod = mod_a,
-                          simMods = mod_b,
+test = ena.compare.models(observedMod = real_mod,
+                          simMods = mod.results,
                           method = "euclidean")
-print(test)
+test 
+
 #calculate bias corrected, accelerated percentile intervals
 test.ci = bca(test$distribution)
-print(test.ci)
+test.ci
 
+mean(test$distribution)

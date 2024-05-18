@@ -14,7 +14,9 @@ sim_boot.3.1 = function(codes,
                         adj_mats,
                         type,
                         steps,
-                        proj_set){
+                        proj_set,
+                        version,
+                        iterative_mean){
 
 
 #simulate dataset based on sampled matrices
@@ -25,7 +27,9 @@ sim_inter_mods = map2(.x = t_matrices,
                  window_size_inter = window,
                  type = type,
                  steps = steps,
-                 proj_set = proj_set)
+                 proj_set = proj_set,
+                 version = version,
+                 iterative_mean = iterative_mean)
 
 
 sim_inter_mods = bind_rows(sim_inter_mods,.id = "id")

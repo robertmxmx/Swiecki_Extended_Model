@@ -1,0 +1,16 @@
+UserName,GroupName,A,B,C,Null
+Mike,Electric,0,0,1,0
+John ,Electric,0,1,1,0
+John ,Electric,0,1,0,0
+Sally,Electric,0,0,1,0
+John ,Electric,0,1,0,0
+Sally,Electric,1,0,0,0
+Sally,Electric,1,0,1,0
+Mike,Electric,1,0,0,0
+Mike,Electric,1,0,0,0
+Sally,Electric,0,0,0,1
+John ,Electric,1,0,0,0
+Mike,Electric,1,1,0,0
+Mike,Electric,0,0,0,1
+Sally,Electric,1,1,1,0
+John ,Electric,0,1,1,0

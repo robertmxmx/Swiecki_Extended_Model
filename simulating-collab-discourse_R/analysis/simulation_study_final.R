@@ -46,14 +46,21 @@ proj_set = set.inter$rotation
 
 set.seed(1234)
 
-mod.results = replicate(n = 5, expr = sim_boot.3.1(
+t_matrix_sample
+c_matrix_sample
+
+mod.results = replicate(n = 10, expr = sim_boot.3.1(
                            codes = 9,
                            window = 2,
                            steps = 187, #average number of lines from observed data
                            type = "sim",
                            t_matrices = t_matrix_sample,
                            adj_mats = c_matrix_sample,
-                           proj_set = proj_set), simplify = FALSE)
+                           proj_set = proj_set,
+                           version = "original",
+                           iterative_mean = 2), simplify = FALSE)
+
+mod.results
 
 print("getting results")
 
@@ -73,6 +80,9 @@ dfs = map(boot_mod,pluck,"frame")
 dfs = bind_rows(dfs)
 out_range = range(dfs$MR1)
 
+mod.results
+dfs
+out_range
 
 
 

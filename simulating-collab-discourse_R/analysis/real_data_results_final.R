@@ -11,6 +11,7 @@ library(lattice)
 library(MuMIn)
 library(HLMdiag)
 library(parameters)
+library(dplyr)
 
 source('~/Rprojects/simulating-collab-discourse/functions/update.net.R')
 source('~/RProjects/simulating-collab-discourse/functions/distance.R')
@@ -22,7 +23,7 @@ source('~/Rprojects/simulating-collab-discourse/functions/update.net.R')
 
 ################################################################################
 #load data
-rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/data/rs.fg.single.R1valid.csv",
+rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/data/data_new/rs.fg.single.R1valid_density_330.csv",
                  stringsAsFactors = FALSE)
 
 #set up model params
@@ -145,7 +146,7 @@ co_mats = map(co_mats,update.net)
 ###get self-references for adj matrices
 new.row.connection.counts = cbind(accum.inter.null$model$row.connection.counts,cons)
 d = new.row.connection.counts %>% select(UserName,GroupName,all_of(con.names))
-self_cons = d %>% group_by(UserName,GroupName) %>% summarise(across(contains("&"), ~ sum(.)),.groups = "keep")
+self_cons = d %>% group_by(UserName,GroupName) %>% summarise(across(contains("&"), ~ sum(.)), .groups = "keep")
 
 ###update adj mat diagonal with self references
 co_mats = co_mats[sort(names(co_mats))]
@@ -257,7 +258,6 @@ AIC(mod_test)
 names(dat_)[c(3,4,6,7,8,9,10)] = c("Team","Jigsaw","ENA1","interactivity","dissimilarity","int.mean","diss.mean")
 dat_ = dat_ %>% mutate(Jigsaw = if_else(Jigsaw == "First","Pre","Post"))
 mod_test = lmerTest::lmer(ENA1 ~ 1 + diss.mean + (1|Team),data = dat_) #best model
-print(mod_test)
 summary(mod_test)
 
 r.squaredGLMM(mod_test)

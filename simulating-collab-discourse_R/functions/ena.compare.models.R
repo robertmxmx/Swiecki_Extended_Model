@@ -6,17 +6,24 @@
 
 ena.compare.models = function(observedMod,
                               simMods,
-                              method = c("euclidean","mahalanobis")
+                              method = c("euclidean","mahalanobis"),
+                              normalise = TRUE
                               ){
   
   
   #browser()
   #remove meta
   observedMod = observedMod %>% select(contains("&"))
-  simMods = map(simMods,select,contains("V"))
-  simMods = map(simMods,data.frame)
   
-  
+  #ADD NORMALISATION CONDITION
+  if (normalise == FALSE){
+    simMods = map(simMods,select, contains("&"))
+    simMods = map(simMods,data.frame)
+  }else{
+    simMods = map(simMods,select,contains("V"))
+    simMods = map(simMods,data.frame)
+  }
+
 
   #calculate the mean of the distribution of models (i.e., the centroid of the 
   #point cloud)
@@ -52,6 +59,7 @@ ena.compare.models = function(observedMod,
     stop("Chosen method not supported. Ensure you are using either Euclidean or Mahalanobis")
   }
   
+  #browser()
   # calculate distance between each observed point and the centroid.
   obs.distances = get.mah.dist(x1 = observedMod,x2 = meanMod,covmats = covs)
   #mean these distances to get the test statistic

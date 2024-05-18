@@ -1,6 +1,7 @@
 #script for getting self connection counts 
-rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/rs.fg.sim.test.csv",stringsAsFactors = FALSE)
-
+#rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/rs.fg.sim.test.csv",stringsAsFactors = FALSE)
+rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/data/rs.fg.single.R1valid.csv",
+                 stringsAsFactors = FALSE)
 
 codenames = c("Performance.Parameters_c",
               "Client.and.Consultant.Requests_c",
@@ -9,7 +10,7 @@ codenames = c("Performance.Parameters_c",
               "PAM_c",
               "Pneumatic_c",
               "SE_c",
-              "Technical.Constraints.2_c")
+              "Technical.Constraints_c")
 
 code_cols = c(codenames,"null_c")
 

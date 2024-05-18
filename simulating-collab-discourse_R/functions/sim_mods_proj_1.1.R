@@ -9,14 +9,21 @@ sim_mods_proj_1.1 = function(codes,
                     window_size_inter,
                     proj_set,
                     type,
-                    steps){
+                    steps,
+                    version,
+                    iterative_mean){
   #browser()
   
   ##simulate data
   dat_ = sim_discourse_3.1(trans_mat = trans_mat,
                            adj_mats = adj_mats,
                            type = type,
-                           steps = steps)
+                           steps = steps,
+                           version = version,
+                           iterative_mean = iterative_mean)
+  
+  #######
+  #should have more than 1 code per line at this point 
   
   ##model set up
   code_ids = LETTERS[1:(codes - 1)]

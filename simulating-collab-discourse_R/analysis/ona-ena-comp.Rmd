@@ -1,0 +1,232 @@
+---
+title: "Untitled"
+author: "Zachari Swiecki"
+date: "2024-03-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+clearing environment
+```{r}
+rm(list = ls())
+```
+
+install packages
+```{r}
+install.packages("rENA")
+
+install.packages("ona", repos = c("https://cran.qe-libs.org", "https://cran.rstudio.org"))
+
+install.packages("tma", repos = c("https://cran.qe-libs.org", "https://cran.rstudio.org"))
+```
+
+
+
+```{r message=FALSE}
+library(rENA)
+library(ona)
+library(tma)
+library(tidyverse)
+```
+
+
+
+```{r}
+#Prep data
+data1 = rENA::RS.data
+data1
+data2 = data1
+
+data1$class = rep("NoUptake", nrow(data1))
+data2$class = rep("Uptake", nrow(data2))
+
+data = rbind(data1,data2)
+
+#Set up ONA models
+
+unitCols = c("Condition", "UserName","class")
+codeCols = c('Data', 'Technical.Constraints', 'Performance.Parameters', 'Client.and.Consultant.Requests', 'Design.Reasoning', 'Collaboration')
+my_hoo_rules <- conversation_rules(
+                  (class %in% UNIT$class & #team %in% UNIT$team
+                   Condition %in% UNIT$Condition & 
+                   GroupName %in% UNIT$GroupName & 
+                   ActivityNumber %in% UNIT$ActivityNumber))
+#Accumulate connections
+accum.ona <-
+  contexts(data, 
+           units_by = unitCols, 
+           hoo_rules = my_hoo_rules) |>
+  accumulate_contexts(codes = codeCols, 
+                      decay.function = decay(simple_window, window_size = 6),
+                      return.ena.set = FALSE)
+
+#remove diagonal and combine connections for nouptake
+df = as.matrix(accum.ona$connection.counts$class$NoUptake)
+
+
+#as.vector(df[1,])
+
+matrices <- apply(df, 1, function(row) {
+  # Number of items in a row that form a square matrix
+  n <- sqrt(length(row))
+  # Reshape the row into a square matrix
+  matrix(as.numeric(row), nrow = n, ncol = n)
+  #browser()
+},simplify = FALSE)
+
+#check
+matrices[[1]]
+
+#update matrices
+
+matrices <- map(matrices, function(x) {
+  #remove diagonal
+  diag(x) = 0 
+  #combine upper and lower tris
+  up = x[upper.tri(x)]
+  low = x[lower.tri(x)]
+  both = up + low
+  #split evenly
+  even = both/2
+  #fill matrix
+  x[upper.tri(x)] = even
+  x[lower.tri(x)] = even
+  return(x)
+})
+
+#check
+matrices[[1]]
+
+#convert back to vector for each unit
+
+vectors = map(matrices, function(x){
+  adj.vec = c(x)
+  return(adj.vec)
+})
+
+#check
+#vectors[1]
+
+#combine
+connection.counts.nouptake = do.call("rbind", vectors)
+
+#add colnames and metadata
+connection.counts.nouptake = as.data.table(connection.counts.nouptake)
+colnames(connection.counts.nouptake) = colnames(df)
+connection.counts.nouptake = cbind(accum.ona$meta.data$class$NoUptake,connection.counts.nouptake)
+
+#covert to ena matrix and connection object
+connection.counts.nouptake = rENA::as.ena.matrix(connection.counts.nouptake)
+connection.counts.nouptake = ona::as.ena.co.occurrence(connection.counts.nouptake)
+
+#check
+#class(connection.counts)
+
+#combine connections for uptake
+df = as.matrix(accum.ona$connection.counts$class$NoUptake)
+
+
+#as.vector(df[1,])
+
+matrices <- apply(df, 1, function(row) {
+  # Number of items in a row that form a square matrix
+  n <- sqrt(length(row))
+  # Reshape the row into a square matrix
+  matrix(as.numeric(row), nrow = n, ncol = n)
+  #browser()
+},simplify = FALSE)
+
+#check
+#matrices[[1]]
+
+#update matrices
+
+matrices <- map(matrices, function(x) {
+  #remove diagonal
+  #diag(x) = 0 
+  #combine upper and lower tris
+  up = x[upper.tri(x)]
+  low = x[lower.tri(x)]
+  both = up + low
+  #split evenly
+  even = both/2
+  #fill matrix
+  x[upper.tri(x)] = even
+  x[lower.tri(x)] = even
+  return(x)
+})
+
+#check
+#matrices[[1]]
+
+#convert back to vector for each unit
+
+vectors = map(matrices, function(x){
+  adj.vec = c(x)
+  return(adj.vec)
+})
+
+#check
+#vectors[1]
+
+#combine
+connection.counts.uptake = do.call("rbind", vectors)
+
+#add colnames and metadata
+connection.counts.uptake = as.data.table(connection.counts.uptake)
+colnames(connection.counts.uptake) = colnames(df)
+connection.counts.uptake = cbind(accum.ona$meta.data$class$Uptake, connection.counts.uptake)
+
+#covert to ena matrix and connection object
+connection.counts.uptake = rENA::as.ena.matrix(connection.counts.uptake)
+connection.counts.uptake = ona::as.ena.co.occurrence(connection.counts.uptake)
+
+#check
+#class(connection.counts)
+
+#replace original co-occurrence counts
+
+new.counts = rbind(connection.counts.nouptake,connection.counts.uptake)
+new.counts = rENA::as.ena.matrix(new.counts)
+new.counts = ona::as.ena.co.occurrence(new.counts)
+
+accum.ona$connection.counts = new.counts
+
+#Make set with means rotation between nouptake and uptake
+
+set.ona <-
+  model(accum.ona,                            
+        rotate.using ="mean",                  
+        rotation.params =                      
+              list(NoUptake=accum.ona$meta.data$class == "NoUptake",
+                   Uptake=accum.ona$meta.data$class == "Uptake")   
+        )
+#Do statistical test and get effect size
+
+
+x = set.ona$points %>% filter(class == "NoUptake") %>% select(MR1) %>% as.vector() %>% unlist()
+y = set.ona$points %>% filter(class == "Uptake") %>% select(MR1) %>% as.vector() %>% unlist()
+
+test = t.test(x,y,paired = TRUE)
+
+test
+
+
+## calculate effect size
+est = test$estimate
+
+diffs = x - y
+
+sd_diffs = sd(diffs)
+
+d = as.numeric(est/sd_diffs)
+
+d
+
+```
+
+
+

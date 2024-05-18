@@ -22,7 +22,7 @@ source('~/Rprojects/simulating-collab-discourse/functions/update.net.R')
 
 ################################################################################
 #load data
-rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/data/rs.fg.single.R1valid.csv",
+rs.fg = read.csv(file = "~/Rprojects/simulating-collab-discourse/data/rs.fg.sim.test.csv",
                  stringsAsFactors = FALSE)
 
 #set up model params
@@ -136,17 +136,29 @@ accum.inter.null =
     metadata = meta,
     window.size.back = 2)
 
+print(accum.inter.null)
+
 ###get connections in adjacency form
 co_mats = connection.matrix(accum.inter.null)
+
+print(co_mats)
 
 ###make symmetric
 co_mats = map(co_mats,update.net)
 
+print(accum.inter.null$model$row.connection.counts)
+print(cbind(accum.inter.null$model$row.connection.counts,cons))
+#write.csv(cbind(accum.inter.null$model$row.connection.counts,cons),"C:/Users/Desktop/Swiecki_Extended_Model/test.csv")
+
+#View(cbind(accum.inter.null$model$row.connection.counts,cons),"C:/Users/Desktop/Swiecki_Extended_Model/test.csv")
+
 ###get self-references for adj matrices
 new.row.connection.counts = cbind(accum.inter.null$model$row.connection.counts,cons)
-d = new.row.connection.counts %>% select(UserName,GroupName,all_of(con.names))
-self_cons = d %>% group_by(UserName,GroupName) %>% summarise(across(contains("&"), ~ sum(.)),.groups = "keep")
 
+d = new.row.connection.counts %>% select(UserName,GroupName,all_of(con.names))
+print(d)
+self_cons = d %>% group_by(UserName,GroupName) %>% summarise(across(contains("&"), ~ sum(.)),.groups = "keep")
+print(self_cons)
 ###update adj mat diagonal with self references
 co_mats = co_mats[sort(names(co_mats))]
 
@@ -161,6 +173,7 @@ update_diag = function(diags,mats){
 
 co_mats = update_diag(self_cons,co_mats)
 
+print(co_mats)
 ###convert to probabilities
 speakers = accum.inter$meta.data$ENA_UNIT
 speakers = sort(speakers)
@@ -182,6 +195,8 @@ for (i in 1:length(speakers)){
   speaker.list[[i]] = unlist(window.count.list)
 }
 names(speaker.list) = speakers
+
+print(co_mats)
 
 ####divide co_mats by line counts
 co_mats = map2(.x = co_mats,.y = speaker.list,.f = function(x,y) x/y)
